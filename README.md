@@ -1,4 +1,4 @@
-Introductions
+Land Registry Introductions Service
 =========
 
 [![Build Status](https://travis-ci.org/LandRegistry/introductions.svg)](https://travis-ci.org/LandRegistry/ownership)
