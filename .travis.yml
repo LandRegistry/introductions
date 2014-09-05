@@ -7,6 +7,13 @@ install:
 - pip install python-coveralls
 script:
 - source ./environment_test.sh
-- py.test --cov ownership tests/ --cov-report=term --cov-report=html
+- py.test --cov introductions tests/ --cov-report=term --cov-report=html
 after_success:
 - coveralls
+deploy:
+  provider: heroku
+  api_key:
+    secure: SxydJk/RPPFEV+kFlnGJUcbkuOt1X/nwkB3fsrqb87pXiHUZ4eDIL6j61vRSuyuHwQEnUUAkjks9H8QylNBv3bHiMTb7EVpnR29nbCH0HejZ8uenX2cncCAU1oMhs5KsBSriLJCgQaDK+s4fuSVrtv6RIB2517Wg9oXe+sPML1o=
+  app: lr-introductions
+  on:
+    repo: LandRegistry/introductions
