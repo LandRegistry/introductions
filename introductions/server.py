@@ -29,16 +29,15 @@ def add_relationship():
             code = code_generator()
 
             app.logger.info("code: %s" % (json.dumps(code)))
-            #query = db.session.query(Conveyancer).filter(Conveyancer.lrid == conveyancer_lrid).first()
+            query = db.session.query(Conveyancer).filter(Conveyancer.lrid == conveyancer_lrid).first()
 
-            conveyancer = Conveyancer()
-            conveyancer.code = code
-            conveyancer.lrid = conveyancer_lrid
-            conveyancer.title_number = title_number
-            conveyancer.name = conveyancer_name
-            conveyancer.address = conveyancer_address
-            db.session.add(conveyancer)
-            db.session.commit()
+            if query is None:
+                conveyancer = Conveyancer()
+                conveyancer.lrid = conveyancer_lrid
+                conveyancer.name = conveyancer_name
+                conveyancer.address = conveyancer_address
+                db.session.add(conveyancer)
+                db.session.commit()
 
             token = Token()
             token.code = code
