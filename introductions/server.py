@@ -1,5 +1,5 @@
 from introductions import app, db
-from flask import request, Response
+from flask import request, Response, jsonify
 from models import Conveyancer, Token
 from services.search_api import get_property_by_title_number
 
@@ -9,9 +9,11 @@ import random
 import datetime
 import uuid
 
+
 @app.route('/')
 def index():
     return "OK"
+
 
 @app.route('/relationship', methods=['POST'])
 def add_relationship():
@@ -49,13 +51,13 @@ def add_relationship():
 
             db.session.commit()
 
-            data = {"code" : code}
+            data = {"code": code}
 
             app.logger.info("response: %s" % (json.dumps(data)))
 
             response = Response(response=json.dumps(data),
-                    status=200,
-                    mimetype="application/json")
+                                status=200,
+                                mimetype="application/json")
 
             return response
         else:
@@ -64,44 +66,27 @@ def add_relationship():
 
 @app.route('/confirm', methods=['POST'])
 def confirm_relationship():
-
-    code = request.json.get("code")
+    app.logger.info("confirm request:: %s" % request.get_json())
+    code = request.json["code"]
 
     if code:
-      client_lrid = request.json.get("client_lrid")
+        token = Token.query.filter_by(code=code).first()
 
-      token = Token.query.filter_by(code=code).first()
-
-      if token:
-        client_json = json.loads(token.client_details)
-        count = 0
-        confirmed_count = 0
-
-        for citizen in client_json:
-            ++count
-            if citizen['confirmed'] is not None:
-                ++confirmed_count
-
-            if citizen['lrid'] == client_lrid:
-                client_json['confirmed'] = datetime.datetime.now()
-
-        # only set when all clients have confirmed
-        if count == confirmed_count:
+        if token:
             token.confirmed = datetime.datetime.now()
 
-        token.client_details = client_json
-        db.session.add(token)
-        db.session.commit()
-        return Response("Client confirmed", status=200)
-      else:
-        return Response("No client found for lrid and code combination", status=400)
+            db.session.add(token)
+            db.session.commit()
+            conveyancer = Conveyancer.query.filter_by(lrid=token.conveyancer_lrid).first()
+            return jsonify({'conveyancer_name':conveyancer.name})
+        else:
+            return Response("No client found for lrid and code combination", status=400)
     else:
-      return Response("Field code found", status=400)
+        return Response("Field code found", status=400)
 
-@app.route('/details', methods=['POST'])
-def get_relationship():
 
-    token = request.json.get('token')
+@app.route('/details/<token>')
+def get_relationship(token):
     client_array = []
     response_json = None
     conveyancer_json = None
@@ -119,8 +104,8 @@ def get_relationship():
             client_details_json = json.loads(token_details.client_details)
 
             for client in client_details_json:
-               # client_json['clients'].append(client_details_json)
-                client_json = {"lrid" : client['lrid'],
+                # client_json['clients'].append(client_details_json)
+                client_json = {"lrid": client['lrid'],
                                "name": client['name'],
                                "address": client['address'],
                                "tel_no": client['tel_no'],
@@ -135,16 +120,13 @@ def get_relationship():
                 Conveyancer.lrid == token_details.conveyancer_lrid).first()
 
             if conveyancer_details:
-
                 lrid_str = str(conveyancer_details.lrid)
 
-                conveyancer_json = {"lrid" : lrid_str,
+                conveyancer_json = {"lrid": lrid_str,
                                     "name": conveyancer_details.name,
                                     "address": conveyancer_details.address}
 
-
                 title_details = get_property_by_title_number(token_details.title_number)
-
 
         response_json = {"conveyancer_lrid": conveyancer_json['lrid'],
                          "conveyancer_name": conveyancer_json['name'],
@@ -157,13 +139,12 @@ def get_relationship():
                          "property_town": title_details['property']['address']['city'],
                          "property_postcode": title_details['property']['address']['postcode'],
                          "geometry": title_details['extent']
-                         }
+        }
 
     return json.dumps(__add_client(response_json, client_array))
 
 
 def __add_client(response_json, client_array):
-
     """
     :rtype : JSON
     """
