@@ -71,11 +71,14 @@ def add_relationship():
 @app.route('/confirm', methods=['POST'])
 def confirm_relationship():
     app.logger.info("confirm request:: %s" % request.get_json())
-    token = request.json["code"]
-    client_lrid = request.json["lrid"]
+    try:
+        token = request.json["code"]
+        client_lrid = uuid.UUID(request.json["client_lrid"])
+    except Exception as e:
+        return Response("Invalid input", status=400)
 
     if token and client_lrid:
-        relationship = Relationship.query.filter_by(token=token).first()
+        relationship = Relationship.query.filter_by(token=token, client_lrid=client_lrid).first()
 
         if relationship:
             relationship.confirmed = datetime.datetime.now()
