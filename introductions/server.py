@@ -1,7 +1,6 @@
 from introductions import app, db
 from flask import request, Response, jsonify
-from models import Conveyancer, Token
-from services.search_api import get_property_by_title_number
+from models import Conveyancer, Relationship
 
 import json
 import string
@@ -28,11 +27,12 @@ def add_relationship():
 
         if title_number and conveyancer_lrid:
 
-            code = code_generator()
+            token = code_generator()
 
-            app.logger.info("code: %s" % (json.dumps(code)))
+            app.logger.info("token: %s" % (json.dumps(token)))
+
+            # check to see if an instance of the conveyancer exists already
             query = db.session.query(Conveyancer).filter(Conveyancer.lrid == conveyancer_lrid).first()
-
             if query is None:
                 conveyancer = Conveyancer()
                 conveyancer.lrid = conveyancer_lrid
@@ -41,17 +41,21 @@ def add_relationship():
                 db.session.add(conveyancer)
                 db.session.commit()
 
-            token = Token()
-            token.code = code
-            token.conveyancer_lrid = conveyancer_lrid
-            token.task = task
-            token.title_number = title_number
-            token.client_details = json.dumps(clients)
-            db.session.add(token)
+            #get client details out (should only be 1 for now)
+            for client in clients:
+                client_lrid = uuid.UUID(client['lrid'])
+
+            relationship = Relationship()
+            relationship.token = token
+            relationship.conveyancer_lrid = conveyancer_lrid
+            relationship.client_lrid = client_lrid
+            relationship.task = task
+            relationship.title_number = title_number
+            db.session.add(relationship)
 
             db.session.commit()
 
-            data = {"code": code}
+            data = {"token": token}
 
             app.logger.info("response: %s" % (json.dumps(data)))
 
@@ -67,18 +71,19 @@ def add_relationship():
 @app.route('/confirm', methods=['POST'])
 def confirm_relationship():
     app.logger.info("confirm request:: %s" % request.get_json())
-    code = request.json["code"]
+    token = request.json["code"]
+    client_lrid = request.json["lrid"]
 
-    if code:
-        token = Token.query.filter_by(code=code).first()
+    if token and client_lrid:
+        relationship = Relationship.query.filter_by(token=token).first()
 
-        if token:
-            token.confirmed = datetime.datetime.now()
+        if relationship:
+            relationship.confirmed = datetime.datetime.now()
 
-            db.session.add(token)
+            db.session.add(relationship)
             db.session.commit()
-            conveyancer = Conveyancer.query.filter_by(lrid=token.conveyancer_lrid).first()
-            return jsonify({'conveyancer_name':conveyancer.name})
+            conveyancer = Conveyancer.query.filter_by(lrid=relationship.conveyancer_lrid).first()
+            return jsonify({'conveyancer_name': conveyancer.name})
         else:
             return Response("No client found for lrid and code combination", status=400)
     else:
@@ -87,37 +92,22 @@ def confirm_relationship():
 
 @app.route('/details/<token>')
 def get_relationship(token):
-    client_array = []
     response_json = None
     conveyancer_json = None
-    title_details = None
     task = None
 
     if token:
         # get relationship details
-        token_details = db.session.query(Token).filter(Token.code == token).first()
+        relationship = db.session.query(Relationship).filter(Relationship.token == token).first()
 
-        if token_details:
-            task = token_details.task
-            title_number = token_details.title_number
+        if relationship:
+            task = relationship.task
+            title_number = relationship.title_number
 
-            client_details_json = json.loads(token_details.client_details)
-
-            for client in client_details_json:
-                # client_json['clients'].append(client_details_json)
-                client_json = {"lrid": client['lrid'],
-                               "name": client['name'],
-                               "address": client['address'],
-                               "tel_no": client['tel_no'],
-                               "email": client['email'],
-                               "DOB": client['DOB']}
-                if 'completed' in client:
-                    client_json['completed'] = client['completed']
-
-                client_array.append(client_json)
+            client_lrid = str(relationship.client_lrid)
 
             conveyancer_details = db.session.query(Conveyancer).filter(
-                Conveyancer.lrid == token_details.conveyancer_lrid).first()
+                Conveyancer.lrid == relationship.conveyancer_lrid).first()
 
             if conveyancer_details:
                 lrid_str = str(conveyancer_details.lrid)
@@ -126,22 +116,14 @@ def get_relationship(token):
                                     "name": conveyancer_details.name,
                                     "address": conveyancer_details.address}
 
-                title_details = get_property_by_title_number(token_details.title_number)
-
         response_json = {"conveyancer_lrid": conveyancer_json['lrid'],
                          "conveyancer_name": conveyancer_json['name'],
                          "conveyancer_address": conveyancer_json['address'],
+                         "client_lrid": client_lrid,
                          "task": task,
-                         "title_number": title_number,
-                         "clients": [],
-                         "property_no": title_details['property']['address']['address_line_1'],
-                         "property_road": title_details['property']['address']['address_line_2'],
-                         "property_town": title_details['property']['address']['city'],
-                         "property_postcode": title_details['property']['address']['postcode'],
-                         "geometry": title_details['extent']
-        }
+                         "title_number": title_number}
 
-    return json.dumps(__add_client(response_json, client_array))
+    return json.dumps(response_json)
 
 
 def __add_client(response_json, client_array):

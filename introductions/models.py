@@ -8,13 +8,13 @@ class Conveyancer(db.Model):
     name = db.Column(db.String(), nullable=False)
     address = db.Column(db.String(), nullable=False)
 
-class Token(db.Model):
+class Relationship(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
-    code = db.Column(db.String(), nullable=False)
+    token = db.Column(db.String(), nullable=False)
     conveyancer_lrid = db.Column(UUID(as_uuid=True), db.ForeignKey('conveyancer.lrid'),nullable=False)
+    client_lrid = db.Column(UUID(as_uuid=True), nullable=False)
     title_number = db.Column(db.String(), nullable=False)
-    client_details = db.Column(db.Text, nullable=False)
     task = db.Column(db.String(), nullable=False)
     confirmed = db.Column(db.DateTime)
     expiry_date = db.Column(db.Date)

@@ -1,14 +1,12 @@
-"""modifiying conveyancer table - removing code, changoing lrid to PK and removing title_number
+"""rename code column to token
 
-Revision ID: 1a495ed7ff07
-Revises: e471a3b5e74
-Create Date: 2014-09-15 09:29:43.751434
+Revision ID: b851d7566c3
+Create Date: 2014-09-17 08:29:00.138766
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1a495ed7ff07'
-down_revision = 'e471a3b5e74'
+revision = 'b851d7566c3'
 
 from alembic import op
 import sqlalchemy as sa
@@ -23,14 +21,14 @@ def upgrade():
                     sa.PrimaryKeyConstraint('lrid')
     )
 
-    op.create_table('token',
+    op.create_table('relationship',
                     sa.Column('id', sa.Integer(), nullable=False),
-                    sa.Column('code', sa.String(), nullable=True),
+                    sa.Column('token', sa.String(), nullable=True),
                     sa.Column('conveyancer_lrid', postgresql.UUID(as_uuid=True), nullable=False),
+                    sa.Column('client_lrid', postgresql.UUID(as_uuid=True), nullable=False),
                     sa.Column('confirmed', sa.DateTime(), nullable=True),
                     sa.Column('title_number', sa.String(), nullable=False),
                     sa.Column('task', sa.String(), nullable=False),
-                    sa.Column('client_details', sa.TEXT(), nullable=False),
                     sa.Column('expiry_date', sa.String(), nullable=True),
                     sa.ForeignKeyConstraint(['conveyancer_lrid'], ['conveyancer.lrid'], ),
                     sa.PrimaryKeyConstraint('id')
@@ -38,4 +36,4 @@ def upgrade():
 
 def downgrade():
     op.drop_table('conveyancer')
-    op.drop_table('token')
+    op.drop_table('relationship')
