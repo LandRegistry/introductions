@@ -22,8 +22,6 @@ def add_relationship():
         conveyancer_lrid = uuid.UUID(request.json.get("conveyancer_lrid"))
         clients = request.json.get("clients")
         task = request.json.get("task")
-        conveyancer_name = request.json.get("conveyancer_name")
-        conveyancer_address = request.json.get("conveyancer_address")
 
         if title_number and conveyancer_lrid:
 
@@ -32,14 +30,10 @@ def add_relationship():
             app.logger.info("token: %s" % (json.dumps(token)))
 
             # check to see if an instance of the conveyancer exists already
-            query = db.session.query(Conveyancer).filter(Conveyancer.lrid == conveyancer_lrid).first()
-            if query is None:
-                conveyancer = Conveyancer()
-                conveyancer.lrid = conveyancer_lrid
-                conveyancer.name = conveyancer_name
-                conveyancer.address = conveyancer_address
-                db.session.add(conveyancer)
-                db.session.commit()
+            conveyancer = db.session.query(Conveyancer).filter(Conveyancer.lrid == conveyancer_lrid).first()
+            if conveyancer is None:
+               return Response("Conveyancer does not exist", 404)
+
 
             #get client details out (should only be 1 for now)
             for client in clients:
