@@ -1,1 +1,1 @@
-export DATABASE_URL='sqlite://'
+export DATABASE_URL='postgresql://localhost/introductions_test'

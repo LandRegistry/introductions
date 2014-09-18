@@ -11,68 +11,64 @@ import uuid
 
 @app.route('/')
 def index():
-    return "OK"
+    return "OK", 200
 
 
 @app.route('/relationship', methods=['POST'])
 def add_relationship():
-    if request.method == 'POST':
+    title_number = request.json.get("title_number")
+    conveyancer_lrid = uuid.UUID(request.json.get("conveyancer_lrid"))
+    clients = request.json.get("clients")
+    task = request.json.get("task")
+    conveyancer_name = request.json.get("conveyancer_name")
+    conveyancer_address = request.json.get("conveyancer_address")
 
-        title_number = request.json.get("title_number")
-        conveyancer_lrid = uuid.UUID(request.json.get("conveyancer_lrid"))
-        clients = request.json.get("clients")
-        task = request.json.get("task")
-        conveyancer_name = request.json.get("conveyancer_name")
-        conveyancer_address = request.json.get("conveyancer_address")
+    app.logger.info("add relationship for title: %s with conveyancer: %s" %(conveyancer_lrid, title_number))
 
-        if title_number and conveyancer_lrid:
+    if title_number and conveyancer_lrid:
 
-            token = code_generator()
+        token = code_generator()
 
-            app.logger.info("token: %s" % (json.dumps(token)))
-
-            # check to see if an instance of the conveyancer exists already
-            query = db.session.query(Conveyancer).filter(Conveyancer.lrid == conveyancer_lrid).first()
-            if query is None:
-                conveyancer = Conveyancer()
-                conveyancer.lrid = conveyancer_lrid
-                conveyancer.name = conveyancer_name
-                conveyancer.address = conveyancer_address
-                db.session.add(conveyancer)
-                db.session.commit()
-
-            #get client details out (should only be 1 for now)
-            for client in clients:
-                client_lrid = uuid.UUID(client['lrid'])
-
-            relationship = Relationship()
-            relationship.token = token
-            relationship.conveyancer_lrid = conveyancer_lrid
-            relationship.client_lrid = client_lrid
-            relationship.task = task
-            relationship.title_number = title_number
-            db.session.add(relationship)
-
+        # check to see if an instance of the conveyancer exists already
+        query = db.session.query(Conveyancer).filter(Conveyancer.lrid == conveyancer_lrid).first()
+        if query is None:
+            conveyancer = Conveyancer()
+            conveyancer.lrid = conveyancer_lrid
+            conveyancer.name = conveyancer_name
+            conveyancer.address = conveyancer_address
+            db.session.add(conveyancer)
             db.session.commit()
 
-            data = {"token": token}
+        #get client details out (should only be 1 for now)
+        for client in clients:
+            client_lrid = uuid.UUID(client['lrid'])
 
-            app.logger.info("response: %s" % (json.dumps(data)))
+        relationship = Relationship()
+        relationship.token = token
+        relationship.conveyancer_lrid = conveyancer_lrid
+        relationship.client_lrid = client_lrid
+        relationship.task = task
+        relationship.title_number = title_number
+        db.session.add(relationship)
 
-            response = Response(response=json.dumps(data),
-                                status=200,
-                                mimetype="application/json")
+        db.session.commit()
 
-            return response
-        else:
-            return Response("title_number or conveyancer_lrid field not found", status=400)
+        data = {"token": token}
+
+        response = Response(response=json.dumps(data),
+                            status=200,
+                            mimetype="application/json")
+
+        return response
+    else:
+        return Response("title_number or conveyancer_lrid field not found", status=400)
 
 
 @app.route('/confirm', methods=['POST'])
 def confirm_relationship():
     app.logger.info("confirm request:: %s" % request.get_json())
     try:
-        token = request.json["code"]
+        token = request.json["token"]
         client_lrid = uuid.UUID(request.json["client_lrid"])
     except Exception as e:
         return Response("Invalid input", status=400)
