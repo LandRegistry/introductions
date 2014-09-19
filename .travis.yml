@@ -19,4 +19,5 @@ deploy:
   app: lr-introduction-service
   on:
     repo: LandRegistry/introductions
+    branch: master
     run: "python manage.py db upgrade"
