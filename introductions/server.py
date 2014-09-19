@@ -71,6 +71,7 @@ def confirm_relationship():
         token = request.json["token"]
         client_lrid = uuid.UUID(request.json["client_lrid"])
     except Exception as e:
+        app.logger.error("Confirm relationship failed: %s" % e.message)
         return Response("Invalid input", status=400)
 
     if token and client_lrid:
@@ -78,10 +79,11 @@ def confirm_relationship():
 
         if relationship:
             relationship.confirmed = datetime.datetime.now()
-
             db.session.add(relationship)
             db.session.commit()
+
             conveyancer = Conveyancer.query.filter_by(lrid=relationship.conveyancer_lrid).first()
+
             return jsonify({'conveyancer_name': conveyancer.name})
         else:
             return Response("No client found for lrid and code combination", status=400)
@@ -123,17 +125,6 @@ def get_relationship(token):
                          "title_number": title_number}
 
     return json.dumps(response_json)
-
-
-def __add_client(response_json, client_array):
-    """
-    :rtype : JSON
-    """
-    for client in client_array:
-        response_json['clients'].append(client)
-
-    return response_json
-
 
 def code_generator(size=4, chars=string.ascii_uppercase):
     return ''.join(random.choice(chars) for _ in range(size))

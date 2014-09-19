@@ -5,8 +5,8 @@ from sqlalchemy.dialects.postgresql import UUID
 class Conveyancer(db.Model):
 
     lrid = db.Column(UUID(as_uuid=True), primary_key=True, nullable=False)
-    name = db.Column(db.String(), nullable=False)
-    address = db.Column(db.String(), nullable=False)
+    name = db.Column(db.String(), nullable=True)
+    address = db.Column(db.String(), nullable=True)
 
 class Relationship(db.Model):
 
