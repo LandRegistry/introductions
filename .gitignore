@@ -54,3 +54,4 @@ docs/_build/
 
 # intellij file
 *.iml
+.DS_Store
