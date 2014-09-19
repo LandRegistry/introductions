@@ -20,24 +20,17 @@ def add_relationship():
     conveyancer_lrid = uuid.UUID(request.json.get("conveyancer_lrid"))
     clients = request.json.get("clients")
     task = request.json.get("task")
-    conveyancer_name = request.json.get("conveyancer_name")
-    conveyancer_address = request.json.get("conveyancer_address")
-
-    app.logger.info("add relationship for title: %s with conveyancer: %s" %(conveyancer_lrid, title_number))
 
     if title_number and conveyancer_lrid:
 
         token = code_generator()
+        app.logger.info("token: %s" % (json.dumps(token)))
 
         # check to see if an instance of the conveyancer exists already
-        query = db.session.query(Conveyancer).filter(Conveyancer.lrid == conveyancer_lrid).first()
-        if query is None:
-            conveyancer = Conveyancer()
-            conveyancer.lrid = conveyancer_lrid
-            conveyancer.name = conveyancer_name
-            conveyancer.address = conveyancer_address
-            db.session.add(conveyancer)
-            db.session.commit()
+        conveyancer = db.session.query(Conveyancer).filter(Conveyancer.lrid == conveyancer_lrid).first()
+        if conveyancer is None:
+            return Response("Conveyancer does not exist", 404)
+
 
         #get client details out (should only be 1 for now)
         for client in clients:
@@ -117,14 +110,16 @@ def get_relationship(token):
                                     "name": conveyancer_details.name,
                                     "address": conveyancer_details.address}
 
-        response_json = {"conveyancer_lrid": conveyancer_json['lrid'],
+            response_json = {"conveyancer_lrid": conveyancer_json['lrid'],
                          "conveyancer_name": conveyancer_json['name'],
                          "conveyancer_address": conveyancer_json['address'],
                          "client_lrid": client_lrid,
                          "task": task,
                          "title_number": title_number}
 
-    return json.dumps(response_json)
+            return json.dumps(response_json)
+        else:
+            return Response("No details found for token", status=400)
 
 def code_generator(size=4, chars=string.ascii_uppercase):
     return ''.join(random.choice(chars) for _ in range(size))
