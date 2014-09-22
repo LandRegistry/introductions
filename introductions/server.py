@@ -119,7 +119,7 @@ def get_relationship(token):
 
             return json.dumps(response_json)
         else:
-            return Response("No details found for token", status=400)
+            return Response("No details found for token", status=404)
 
 def code_generator(size=4, chars=string.ascii_uppercase):
     return ''.join(random.choice(chars) for _ in range(size))
