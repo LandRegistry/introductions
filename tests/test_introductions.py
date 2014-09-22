@@ -94,7 +94,7 @@ class IntroductionTestCase(unittest.TestCase):
     def test_retrieve_invalid_token_details(self):
         with self.app.test_request_context():
             response = self.client.get("/details/ZZZ")
-            self.assertEquals(response.status_code, 400)
+            self.assertEquals(response.status_code, 404)
 
     def test_create_and_confirm_relationship(self):
         with self.app.test_request_context():
