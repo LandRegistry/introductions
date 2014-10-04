@@ -15,9 +15,7 @@ after_success:
 deploy:
   provider: heroku
   api_key:
-    secure: dp9B85UqPyN0H25mjuOHT78tTAnBJUwYU+ZePkaAUjSuTQMMhpJsU8E/X4z3YNcf5HrHbBPu0BGlTB2FkJfhSRojfNBMFNa58CskrT07pA2xCfGsDCVL5eyc2iXDTdpMb/y9lxGiP/RGEqgQF/N+fnH5CI+e8hD//X3a0PqyBZM=
+    secure: EI4cSW0Ld7KIsTlXRgL5HYliuoH2Lhz9odHfa2U+ghK+ljymYMksSzJMMYHFK0ttd2FupFVo6qqQbhANQSyrLZjRPJU+U51HhGTqOKnu9wDvC7vsBAi4GuZJvNlRQ7fSyh+PrAHRC4JVayxDxjX0cP9aFHwJrfMIV4iaLr12lfo=
   app: lr-introduction-service
   on:
     repo: LandRegistry/introductions
-    branch: master
-    run: "python manage.py db upgrade"
