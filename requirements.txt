@@ -7,3 +7,4 @@ Flask-Script
 Flask-SQLAlchemy
 gunicorn
 psycopg2
+-e git+https://github.com/Runscope/healthcheck.git@9d661a916f3ab630ae21e014758aa2f21fd40097#egg=healthcheck

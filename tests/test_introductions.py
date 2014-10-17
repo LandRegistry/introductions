@@ -175,3 +175,7 @@ class IntroductionTestCase(unittest.TestCase):
         invalid_confirm_json = json.dumps({"client_lrid": str(self.client_lrid),
                                            "token": "ABCD"})
         return invalid_confirm_json
+
+    def test_health(self):
+        response = self.client.get('/health')
+        self.assertEqual(response.status, '200 OK')
