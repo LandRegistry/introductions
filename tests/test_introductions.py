@@ -52,13 +52,14 @@ class IntroductionTestCase(unittest.TestCase):
 
     def test_invalid_start_relationship(self):
         with self.app.test_request_context():
-            jd = self.__get_invalid_relationship_json()
+            jd = self.__get_relationship_json_with_missing_title_number()
 
             response = self.client.post("/relationship",
                                         data=jd,
                                         headers={'content-type': 'application/json'})
 
             self.assertEquals(response.status_code, 400)
+            self.assertIn("Key error", response.data)
 
     def test_relationship_with_invalid_conveyancer_lrid(self):
         with self.app.test_request_context():
@@ -118,7 +119,7 @@ class IntroductionTestCase(unittest.TestCase):
         with self.app.test_request_context():
             jd = self.__get_relationship_json()
 
-            response = self.client.post("/relationship",
+            self.client.post("/relationship",
                                         data=jd,
                                         headers={'content-type': 'application/json'})
 
@@ -159,7 +160,7 @@ class IntroductionTestCase(unittest.TestCase):
                                    "token": self.token})
         return confirm_json
 
-    def __get_invalid_relationship_json(self):
+    def __get_relationship_json_with_missing_title_number(self):
         relationship_json = json.dumps({"conveyancer_lrid": str(self.conveyancer_lrid),
                                         "clients": [{"lrid": str(self.client_lrid)}],
                                         "task": "buying", "conveyancer_name": "Enact",

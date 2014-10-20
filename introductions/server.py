@@ -1,6 +1,8 @@
+from sqlalchemy.exc import IntegrityError
 from introductions import app, db
 from flask import request, Response, jsonify
 from models import Conveyancer, Relationship
+from introductions.service import save_relationship
 
 import json
 import string
@@ -16,45 +18,17 @@ def index():
 
 @app.route('/relationship', methods=['POST'])
 def add_relationship():
-    title_number = request.json.get("title_number")
-    conveyancer_lrid = uuid.UUID(request.json.get("conveyancer_lrid"))
-    clients = request.json.get("clients")
-    task = request.json.get("task")
-
-    if title_number and conveyancer_lrid:
-
-        token = code_generator()
-        app.logger.info("token: %s" % (json.dumps(token)))
-
-        # check to see if an instance of the conveyancer exists already
-        conveyancer = db.session.query(Conveyancer).filter(Conveyancer.lrid == conveyancer_lrid).first()
-        if conveyancer is None:
+    try:
+        token = save_relationship(request.json)
+        if token:
+            return jsonify({'token': token})
+        else:
             return Response("Conveyancer does not exist", 404)
+    except KeyError as e:
+        return Response("Key error missing data in request. %s" % e.message, status=400)
+    except IntegrityError as e:
+        return Response("Integrity error relationship already exists. %s" % e.message, status=400)
 
-
-        #get client details out (should only be 1 for now)
-        for client in clients:
-            client_lrid = uuid.UUID(client['lrid'])
-
-        relationship = Relationship()
-        relationship.token = token
-        relationship.conveyancer_lrid = conveyancer_lrid
-        relationship.client_lrid = client_lrid
-        relationship.task = task
-        relationship.title_number = title_number
-        db.session.add(relationship)
-
-        db.session.commit()
-
-        data = {"token": token}
-
-        response = Response(response=json.dumps(data),
-                            status=200,
-                            mimetype="application/json")
-
-        return response
-    else:
-        return Response("title_number or conveyancer_lrid field not found", status=400)
 
 
 @app.route('/confirm', methods=['POST'])
