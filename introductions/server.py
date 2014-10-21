@@ -2,7 +2,7 @@ from sqlalchemy.exc import IntegrityError
 from introductions import app, db
 from flask import request, Response, jsonify
 from models import Conveyancer, Relationship
-from introductions.service import save_relationship
+from introductions.service import save_relationship, get_converyancer, update_relationship, get_relationship_by_token
 
 import json
 import string
@@ -42,58 +42,23 @@ def confirm_relationship():
         return Response("Invalid input", status=400)
 
     if token and client_lrid:
-        relationship = Relationship.query.filter_by(token=token, client_lrid=client_lrid).first()
-
-        if relationship:
-            relationship.confirmed = datetime.datetime.now()
-            db.session.add(relationship)
-            db.session.commit()
-
-            conveyancer = Conveyancer.query.filter_by(lrid=relationship.conveyancer_lrid).first()
-
+        conveyancer_lrid = update_relationship(token, client_lrid)
+        if conveyancer_lrid:
+            conveyancer = get_converyancer(conveyancer_lrid)
             return jsonify({'conveyancer_name': conveyancer.name})
         else:
-            return Response("No client found for lrid and code combination", status=400)
+            return Response("Unable to confirm relationship, the token or client lr_id does not match in the relationship.", status=400)
+
     else:
-        return Response("Field code found", status=400)
+        return Response("Token is missing from the request", status=400)
 
 
 @app.route('/details/<token>')
 def get_relationship(token):
-    response_json = None
-    conveyancer_json = None
-    task = None
-
     if token:
-        # get relationship details
-        relationship = db.session.query(Relationship).filter(Relationship.token == token).first()
-
+        # get relationship and conveyancer details
+        relationship = get_relationship_by_token(token)
         if relationship:
-            task = relationship.task
-            title_number = relationship.title_number
+            return json.dumps(relationship)
 
-            client_lrid = str(relationship.client_lrid)
-
-            conveyancer_details = db.session.query(Conveyancer).filter(
-                Conveyancer.lrid == relationship.conveyancer_lrid).first()
-
-            if conveyancer_details:
-                lrid_str = str(conveyancer_details.lrid)
-
-                conveyancer_json = {"lrid": lrid_str,
-                                    "name": conveyancer_details.name,
-                                    "address": conveyancer_details.address}
-
-            response_json = {"conveyancer_lrid": conveyancer_json['lrid'],
-                         "conveyancer_name": conveyancer_json['name'],
-                         "conveyancer_address": conveyancer_json['address'],
-                         "client_lrid": client_lrid,
-                         "task": task,
-                         "title_number": title_number}
-
-            return json.dumps(response_json)
-        else:
-            return Response("No details found for token", status=404)
-
-def code_generator(size=4, chars=string.ascii_uppercase):
-    return ''.join(random.choice(chars) for _ in range(size))
+    return Response("Token is missing from the request", status=404)

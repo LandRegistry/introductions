@@ -83,7 +83,7 @@ class IntroductionTestCase(unittest.TestCase):
             self.assertTrue('token' in response.data)
 
             token = json.loads(response.data)
-            response = self.client.get("/details/%s" %token["token"])
+            response = self.client.get("/details/%s" % token["token"])
 
             response_json = json.loads(response.data)
             self.assertEquals(response.status_code, 200)
