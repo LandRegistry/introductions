@@ -1,14 +1,11 @@
-from sqlalchemy.exc import IntegrityError
-from introductions import app, db
-from flask import request, Response, jsonify
-from models import Conveyancer, Relationship
-from introductions.service import save_relationship, get_converyancer, update_relationship, get_relationship_by_token
-
 import json
-import string
-import random
-import datetime
 import uuid
+
+from sqlalchemy.exc import IntegrityError
+from flask import request, Response, jsonify
+
+from introductions import app
+from introductions.service import save_relationship, get_converyancer, update_relationship, get_relationship_by_token
 
 
 @app.route('/')
