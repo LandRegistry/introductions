@@ -3,10 +3,12 @@ from flask.ext.sqlalchemy import SQLAlchemy
 import os
 from .health import Health
 
-
 app = Flask(__name__)
 
 app.config.from_object(os.environ.get('SETTINGS'))
+
+from werkzeug.contrib.fixers import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app)
 
 def health(self):
     try:
