@@ -7,4 +7,4 @@ Flask-Script==2.0.5
 Flask-SQLAlchemy==2.0
 gunicorn==19.1.1
 psycopg2==2.5.4
--e git+https://github.com/Runscope/healthcheck.git@9d661a916f3ab630ae21e014758aa2f21fd40097#egg=healthcheck
+healthcheck==0.2
