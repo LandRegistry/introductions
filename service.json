@@ -1,0 +1,16 @@
+{
+  "name": "introductions",
+  "type": "back-end",
+  "github": "https://github.com/LandRegistry/introductions",
+  "heroku": "lr-introduction-service",
+  "url": null,
+  "port": null,
+  "database": "true",
+  "tech": [
+    "python",
+    "flask"
+  ],
+  "dependencies": [
+    "postgres"
+  ]
+}
